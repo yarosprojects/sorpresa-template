@@ -1,0 +1,174 @@
+---
+import Layout from "../../layouts/Layout.astro";
+
+const autorizado = Astro.cookies.get("auth")?.value;
+if (autorizado !== "true") return Astro.redirect("/");
+
+const yaVioConfetti = Astro.cookies.get("confetti_shown")?.value;
+let lanzarConfetti = false;
+
+if (!yaVioConfetti) {
+	lanzarConfetti = true;
+	Astro.cookies.set("confetti_shown", "true", {
+		path: "/",
+		maxAge: 60 * 15,
+	});
+}
+---
+
+<Layout title="Operación Confidencial">
+
+<section id="stage1" class="min-h-screen flex flex-col md:flex-row items-center justify-center relative overflow-hidden">
+	<div id="stage1_container" class="text-center max-w-4xl px-6 md:px-10 relative z-10"></div>
+</section>
+
+<section id="stage2" class="min-h-screen flex flex-col md:flex-row items-center justify-center relative overflow-hidden">
+	<div id="stage2_container" class="text-center max-w-4xl px-6 md:px-10 relative z-10"></div>
+</section>
+
+<section id="stage3" class="min-h-screen flex flex-col md:flex-row items-center justify-center relative overflow-hidden">
+	<div id="stage3_container" class="text-center max-w-4xl px-6 md:px-10 relative z-10"></div>
+</section>
+
+<section id="stage4" class="min-h-screen flex flex-col md:flex-row items-center justify-center relative overflow-hidden">
+	<div id="stage4_container" class="text-center max-w-4xl px-6 md:px-10 relative z-10"></div>
+</section>
+
+<section id="stage5" class="min-h-screen flex flex-col md:flex-row items-center justify-center relative overflow-hidden">
+	<div id="stage5_container" class="text-center max-w-4xl px-6 md:px-10 relative z-10"></div>
+</section>
+
+<section id="stage6" class="min-h-screen flex flex-col md:flex-row items-center justify-center relative overflow-hidden">
+	<div id="stage6_container" class="text-center max-w-4xl px-6 md:px-10 relative z-10"></div>
+</section>
+
+<section id="stage7" class="min-h-screen flex flex-col md:flex-row items-center justify-center relative overflow-hidden">
+	<div id="stage7_container" class="text-center max-w-4xl px-6 md:px-10 relative z-10"></div>
+</section>
+
+<section id="stage8" class="min-h-screen flex flex-col md:flex-row items-center justify-center relative overflow-hidden">
+	<div id="stage8_container" class="text-center max-w-4xl px-6 md:px-10 relative z-10"></div>
+</section>
+
+</Layout>
+
+<script is:inline>
+document.addEventListener("astro:page-load", () => {
+
+	document.body.classList.add("overflow-hidden","bg-white","transition-colors","duration-[1200ms]","ease-in-out");
+
+	function hablar(texto){
+		const u=new SpeechSynthesisUtterance(texto);
+		const v=speechSynthesis.getVoices();
+		const voz=v.find(x=>x.lang.startsWith("es"))||v[0];
+		u.voice=voz;
+		u.rate=0.9;
+		u.pitch=0.95;
+		speechSynthesis.cancel();
+		speechSynthesis.speak(u);
+	}
+
+	function escribirTexto(el,texto){
+		return new Promise(resolve=>{
+			el.textContent="";
+			let i=0;
+			const int=setInterval(()=>{
+				el.textContent+=texto[i];
+				i++;
+				if(i>=texto.length){
+					clearInterval(int);
+					setTimeout(resolve,1200);
+				}
+			},30);
+		});
+	}
+
+	function scrollToSection(section){
+		return new Promise(res=>{
+			section.scrollIntoView({behavior:"smooth"});
+			setTimeout(res,1200);
+		});
+	}
+
+	function cambiarFondo(colorClase){
+		document.body.className=document.body.className.split(" ").filter(c=>!c.startsWith("bg-")).join(" ");
+		document.body.classList.add(colorClase,"transition-colors","duration-[1200ms]","ease-in-out");
+	}
+
+	function createNextButton(nextStage){
+		return new Promise(resolve=>{
+			const btn=document.createElement("button");
+			btn.className="fixed bottom-6 right-6 bg-black text-white px-6 py-3 rounded-xl shadow-lg hover:scale-105 transition-all duration-300 opacity-0 translate-y-5";
+			btn.textContent="Siguiente →";
+			document.body.appendChild(btn);
+			setTimeout(()=>{btn.classList.remove("opacity-0","translate-y-5");btn.classList.add("opacity-100","translate-y-0");},100);
+			btn.addEventListener("click",async()=>{
+				btn.remove();
+				await scrollToSection(nextStage);
+				resolve();
+			},{once:true});
+		});
+	}
+
+	async function stageTemplate(id,texto,imgSrc,posClasses,dark=false,nextId=null){
+		const section=document.getElementById(id);
+		const container=document.getElementById(id+"_container");
+
+		if(dark) cambiarFondo("bg-slate-950"); else cambiarFondo("bg-white");
+
+		const p=document.createElement("div");
+		p.className=`text-3xl sm:text-4xl md:text-6xl font-light opacity-0 blur-md transition-all duration-700 ${dark?"text-white":""}`;
+		container.appendChild(p);
+		p.offsetHeight;
+		p.classList.remove("opacity-0","blur-md");
+		p.classList.add("opacity-100","blur-0");
+
+		hablar(texto);
+		await escribirTexto(p,texto);
+
+		const img=document.createElement("img");
+		img.src=imgSrc;
+		img.className=`
+			w-64 sm:w-80 md:w-[420px]
+			relative md:absolute
+			mx-auto md:mx-0
+			mt-8 md:mt-0
+			opacity-0 blur-2xl scale-110
+			transition-all duration-1000
+			${posClasses}
+		`;
+		section.appendChild(img);
+		img.offsetHeight;
+		img.classList.remove("opacity-0","blur-2xl","scale-110");
+		img.classList.add("opacity-100","blur-0","scale-100");
+
+		await new Promise(r=>setTimeout(r,3000));
+
+		if(nextId) await createNextButton(document.getElementById(nextId));
+	}
+
+	async function start(){
+
+		await stageTemplate("stage1","Señoritas… tengo que confesar algo. Esto no es una salida cualquiera.","/images/imagen_furgoneta_mercedes.jpg","md:right-10 md:top-20",false,"stage2");
+
+		await stageTemplate("stage2","Sí… empieza con carretera. Y no, no es para ir al supermercado. Aunque sería épico aparecer allí con ese estilo.","/images/imagen_furgoneta_mercedes.jpg","md:left-10 md:bottom-20",false,"stage3");
+
+		await stageTemplate("stage3","Habrá un puente. De esos que cruzas y sientes que estás entrando en algo importante… o que te has equivocado de país. Tranquilas, no es lo segundo.","/images/imagen_puente.webp","md:right-20 md:top-20",false,"stage4");
+
+		await stageTemplate("stage4","Puede que haya arquitectura impresionante. De esa que te hace levantar la cabeza y decir… vale, esto no lo construí yo.","/images/arco_triumfo.jpg","md:left-10 md:bottom-20",false,"stage5");
+
+		await stageTemplate("stage5","Y arte. Mucho arte. Del que miras serio aunque no entiendas nada… pero asientes como si supieras.","/images/museo_louvre.jpg","md:right-20 md:bottom-20",true,"stage6");
+
+		await stageTemplate("stage6","Cuando caiga la noche… habrá algo que ilumine el cielo. Y no, no es mi sonrisa.","/images/torre_effiel.jpg","md:left-20 md:top-20",true,"stage7");
+
+		await stageTemplate("stage7","¿Recordáis aquella Navidad todos juntos? Esa sensación de hogar, de risas… de estar exactamente donde queríamos estar.","/images/imagen_casa_arbol_navidad_todos.jpeg","md:right-20 md:bottom-20",false,"stage8");
+
+		await stageTemplate("stage8","Pues esto va de eso. De nosotros. De crear otro recuerdo que dentro de años diremos… ¿os acordáis cuando empezó todo así?","/images/foto_bungalo_camping.webp","md:left-20 md:top-20",false,null);
+	}
+
+	document.addEventListener("click",()=>{speechSynthesis.speak(new SpeechSynthesisUtterance(" "));},{once:true});
+
+	start();
+
+});
+</script>
